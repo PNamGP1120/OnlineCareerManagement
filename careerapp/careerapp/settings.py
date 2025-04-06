@@ -38,6 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'careers.apps.CareersConfig',
+    'rest_framework',
+    'cloudinary',
+    'cloudinary_storage',
+
 ]
 
 MIDDLEWARE = [
@@ -128,3 +132,18 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTH_USER_MODEL = 'careers.MyUser'
+
+
+import cloudinary
+import cloudinary.uploader
+from cloudinary.utils import cloudinary_url
+
+# Configuration
+cloudinary.config(
+    cloud_name = "dqpu49bbo",
+    api_key = "743773348627895",
+    api_secret = "EF7elKsibuI8JEBqfMNZYYWUYvo", # Click 'View API Keys' above to copy your API secret
+    secure=True
+)

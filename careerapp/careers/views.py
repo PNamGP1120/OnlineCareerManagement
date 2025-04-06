@@ -1,3 +1,9 @@
-from django.shortcuts import render
+from rest_framework import viewsets, permissions
+from .models import MyUser, JobSeeker, Recruiter
+from .serializers import JobSeekerSerializer
 
-# Create your views here.
+
+class JobSeekerViewSet(viewsets.ModelViewSet):
+    queryset = JobSeeker.objects.all()
+    serializer_class = JobSeekerSerializer
+
