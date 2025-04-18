@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from .models import JobSeeker, MyUser, Recruiter
+from .models import NguoiDung, NguoiTimViec, NhaTuyenDung
 
-admin.site.register(MyUser)
-admin.site.register(JobSeeker)
-admin.site.register(Recruiter)
+admin.site.register(NguoiDung)
+admin.site.register(NguoiTimViec)
+admin.site.register(NhaTuyenDung)

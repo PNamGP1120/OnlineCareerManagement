@@ -1,82 +1,34 @@
-from django.db import models
+# accounts/models.py
 from django.contrib.auth.models import AbstractUser
+from django.db import models
 from cloudinary.models import CloudinaryField
 
-class DateModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    class Meta:
-        abstract = True
-        ordering = ['-created_at']
+class NguoiDung(AbstractUser):
+    hinh_dai_dien = CloudinaryField('hinh_dai_dien', 'hinh_dai_dien')
+    vai_tro = models.CharField(max_length=50, choices=[('nha_tuyen_dung', 'Nhà Tuyển Dụng'), ('nguoi_tim_viec', 'Người Tìm Việc')], default='nguoi_tim_viec')
+    ngay_cap_nhat = models.DateTimeField(auto_now=True)
 
-# Mô hình User
-class MyUser(AbstractUser):
-    ROLE_CHOICES = [
-        ('jobseeker', 'JobSeeker'),
-        ('recruiter', 'Recruiter'),
-    ]
-    avatar = CloudinaryField('image', null=True, blank=True)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='jobseeker')
-    updated_at = models.DateTimeField(auto_now=True)
-
-# Mô hình JobSeeker
-class JobSeeker(models.Model):
-    user = models.OneToOneField(MyUser, on_delete=models.CASCADE, primary_key=True)
-    skills = models.TextField(blank=True, null=True)
-    experience = models.TextField(blank=True, null=True)
-
-# Mô hình Recruiter
-class Recruiter(models.Model):
-    user = models.OneToOneField(MyUser, on_delete=models.CASCADE, primary_key=True)
-    company_name = models.CharField(max_length=255)
-
-# Mô hình Job
-class Job(DateModel):
-    title = models.CharField(max_length=255)
-    description = models.TextField()
-    requirements = models.TextField(blank=True, null=True)
-    salary = models.IntegerField()
-    location = models.CharField(max_length=255)
-    recruiter = models.ForeignKey(Recruiter, on_delete=models.CASCADE)
-
-# Mô hình JobApplication
-class JobApplication(models.Model):
-    job = models.ForeignKey(Job, on_delete=models.CASCADE)
-    jobseeker = models.ForeignKey(JobSeeker, on_delete=models.CASCADE)
-    applied_date = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=50, blank=True, null=True)
-
-# Mô hình Notification
-class Notification(models.Model):
-    content = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    recruiter = models.ForeignKey(Recruiter, blank=True, null=True, on_delete=models.CASCADE)
-    job_seeker = models.ForeignKey(JobSeeker, blank=True, null=True, on_delete=models.CASCADE)
-
-# Mô hình Conversation
-class Conversation(DateModel):
-    recruiter = models.ForeignKey(Recruiter, blank=True, null=True, on_delete=models.CASCADE)
-    job_seeker = models.ForeignKey(JobSeeker, blank=True, null=True, on_delete=models.CASCADE)
-
-# Mô hình Message
-class Message(models.Model):
-    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE)
-    sender = models.ForeignKey(MyUser, on_delete=models.CASCADE)
-    content = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)
-
-class Interview(DateModel):
-    STATUS_CHOICES = [
-        ('SCHEDULED', 'Scheduled'),
-        ('COMPLETED', 'Completed'),
-        ('CANCELED', 'Canceled'),
-    ]
-
-    application = models.OneToOneField('JobApplication', on_delete=models.CASCADE, related_name='interview')
-    scheduled_at = models.DateTimeField()
-    location = models.CharField(max_length=255)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='SCHEDULED')
-    notes = models.TextField(blank=True)
+# accounts/models.py
+class NguoiTimViec(models.Model):
+    nguoi_dung = models.OneToOneField(NguoiDung, on_delete=models.CASCADE, related_name='nguoi_tim_viec')
+    gioi_tinh = models.BooleanField()  # True cho nam, False cho nữ
+    ngay_sinh = models.DateTimeField()
+    so_dien_thoai = models.CharField(max_length=15)
+    ky_nang = models.CharField(max_length=255)
 
     def __str__(self):
-        return f"Interview for {self.application.job.title} - {self.application.job_seeker.user.username}"
+        return self.nguoi_dung.username
+
+
+# accounts/models.py
+class NhaTuyenDung(models.Model):
+    nguoi_dung = models.OneToOneField(NguoiDung, on_delete=models.CASCADE, related_name='nha_tuyen_dung')
+    ten_doanh_nghiep = models.CharField(max_length=255)
+    website_doanh_nghiep = models.URLField()
+    gioi_thieu_doanh_nghiep = models.TextField()
+    linh_vuc_hoat_dong = models.CharField(max_length=255)
+    dia_chi = models.CharField(max_length=255)
+    hinh_anh_doanh_nghiep = CloudinaryField('hinh_dai_doanh_nghiep', 'hinh_anh_doanh_nghiep')
+
+    def __str__(self):
+        return self.ten_doanh_nghiep

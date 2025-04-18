@@ -133,7 +133,10 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-AUTH_USER_MODEL = 'careers.MyUser'
+AUTH_USER_MODEL = 'careers.NguoiDung'
+
+
+import os
 
 
 import cloudinary
@@ -147,3 +150,13 @@ cloudinary.config(
     api_secret = "EF7elKsibuI8JEBqfMNZYYWUYvo", # Click 'View API Keys' above to copy your API secret
     secure=True
 )
+
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
