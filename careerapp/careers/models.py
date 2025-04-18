@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.utils import timezone
 
 
 # ======= Enum Choices =======
@@ -49,12 +50,12 @@ class NhaTuyenDung(models.Model):
 class CV(models.Model):
     nguoi_tim_viec = models.ForeignKey(NguoiTimViec, on_delete=models.CASCADE)
     ho_ten = models.CharField(max_length=255)
-    nghe_nghiep = models.CharField(max_length=100)
+    nghe_nghiep = models.CharField(max_length=255)
     bang_cap = models.CharField(max_length=10, choices=BangCapChoices.choices)
     so_nam_kinh_nghiem = models.PositiveIntegerField()
-    email = models.EmailField()
+    email = models.EmailField(null=True, blank=True)
     so_dien_thoai = models.CharField(max_length=20)
-    dia_chi = models.CharField(max_length=255)
+    dia_chi = models.CharField(max_length=255, default='Chưa cập nhật')
     ky_nang = models.TextField()
     thanh_tich = models.TextField(blank=True)
     muc_luong_mong_muon = models.PositiveIntegerField()
@@ -63,7 +64,7 @@ class CV(models.Model):
     chung_nhan = models.TextField(blank=True)
     khu_vuc_lam_viec = models.CharField(max_length=255)
     thong_tin_khac = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=timezone.now)
 
 
 # ======= Việc làm =======
@@ -73,7 +74,7 @@ class ViecLam(models.Model):
     vi_tri = models.CharField(max_length=255)
     muc_luong = models.PositiveIntegerField()
     dia_chi = models.CharField(max_length=255)
-    hinh_thuc_lam_viec = models.CharField(max_length=10, choices=HinhThucLamViecChoices.choices)
+    hinh_thuc_lam_viec = models.CharField(max_length=10, choices=HinhThucLamViecChoices.choices, default='FT')
     bang_cap = models.CharField(max_length=10, choices=BangCapChoices.choices)
     kinh_nghiem = models.DurationField()
     phuc_loi = models.TextField()
@@ -113,7 +114,7 @@ class HoiThoai(models.Model):
 
 
 class TinNhan(models.Model):
-    hoi_thoai = models.ForeignKey(HoiThoai, on_delete=models.CASCADE, related_name='tin_nhan')
+    hoi_thoai = models.ForeignKey(HoiThoai, on_delete=models.CASCADE, null=True, blank=True, related_name='tin_nhan')
     nguoi_gui = models.ForeignKey(NguoiDung, on_delete=models.CASCADE, related_name='tin_gui')
     nguoi_nhan = models.ForeignKey(NguoiDung, on_delete=models.CASCADE, related_name='tin_nhan')
     noi_dung = models.TextField()
