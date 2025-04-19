@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
-
+from ckeditor.fields import RichTextField
 
 # ======= Enum Choices =======
 class BangCapChoices(models.TextChoices):
@@ -40,7 +40,7 @@ class NhaTuyenDung(models.Model):
     nguoi_dung = models.OneToOneField(NguoiDung, on_delete=models.CASCADE)
     ten_doanh_nghiep = models.CharField(max_length=255)
     website = models.URLField(blank=True)
-    gioi_thieu = models.TextField()
+    gioi_thieu = RichTextField()
     linh_vuc_hoat_dong = models.CharField(max_length=255)
     dia_chi = models.CharField(max_length=255)
     hinh_anh = models.ImageField(upload_to='logos/', null=True, blank=True)

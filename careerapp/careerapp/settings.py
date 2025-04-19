@@ -41,8 +41,11 @@ INSTALLED_APPS = [
     'rest_framework',
     'cloudinary',
     'cloudinary_storage',
-
+    'ckeditor',
+    'ckeditor_uploader'
 ]
+
+CKEDITOR_UPLOAD_PATH = 'media/uploads/'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
