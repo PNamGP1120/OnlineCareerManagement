@@ -23,7 +23,22 @@ class HinhThucLamViecChoices(models.TextChoices):
 class NguoiDung(AbstractUser):
     hinh_dai_dien = models.ImageField(upload_to='avatars/', null=True, blank=True)
     ngay_cap_nhat = models.DateTimeField(auto_now=True)
+    xem_thong_bao = models.ManyToManyField('ThongBao', through='NguoiDungXemThongBao')
 
+# ======= Thông báo =======
+class ThongBao(models.Model):
+    noi_dung = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+# ======= Thời điểm xem thông báo gần nhất của người dùng =======
+class NguoiDungXemThongBao(models.Model):
+    nguoi_dung = models.ForeignKey(NguoiDung, on_delete=models.CASCADE)
+    thong_bao = models.ForeignKey(ThongBao, on_delete=models.CASCADE)
+    ngay_xem_gan_nhat = models.DateTimeField(auto_now=True)
+    da_doc = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('nguoi_dung', 'thong_bao')
 
 # ======= Người tìm việc =======
 class NguoiTimViec(models.Model):
@@ -120,11 +135,3 @@ class TinNhan(models.Model):
     noi_dung = models.TextField()
     thoi_gian_gui_tin = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
-
-
-# ======= Thông báo =======
-class ThongBao(models.Model):
-    nguoi_dung = models.ForeignKey(NguoiDung, on_delete=models.CASCADE)
-    noi_dung = models.TextField()
-    da_doc = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)

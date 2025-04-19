@@ -2,8 +2,7 @@ from django.contrib import admin
 from django.utils.safestring import mark_safe
 from django import forms
 from ckeditor_uploader.widgets import CKEditorUploadingWidget
-
-from .models import NguoiDung, NguoiTimViec, NhaTuyenDung
+from .models import NguoiDung, NguoiTimViec, NhaTuyenDung, CV, ThongBao, NguoiDungXemThongBao
 
 
 class NhaTuyenDungGioiThieuForm(forms.ModelForm):
@@ -32,6 +31,26 @@ class NhaTuyenDungAdmin(admin.ModelAdmin):
 
     form = NhaTuyenDungGioiThieuForm
 
-admin.site.register(NguoiDung)
-admin.site.register(NguoiTimViec)
+# Người tìm việc có thể thêm CV ngay tại phần nhập thông tin của họ
+class CVInlineAdmin(admin.StackedInline):
+    model = CV
+    fk_name = 'nguoi_tim_viec'
+
+class NguoiTimViecAdmin(admin.ModelAdmin):
+    inlines = [CVInlineAdmin, ]
+
+# Khi vào trang người dùng thì thấy được luôn những thông báo đã xem
+class NguoiDungXemThongBaoInlineAdmin(admin.TabularInline):
+    model = NguoiDungXemThongBao
+    extra = 0
+    fields = ('thong_bao', 'ngay_xem_gan_nhat', 'da_doc')
+    readonly_fields = ('ngay_xem_gan_nhat',)
+
+class NguoiDungAdmin(admin.ModelAdmin):
+    inlines = [NguoiDungXemThongBaoInlineAdmin]
+
+admin.site.register(ThongBao)
+admin.site.register(NguoiDung, NguoiDungAdmin)
+admin.site.register(NguoiTimViec, NguoiTimViecAdmin)
 admin.site.register(NhaTuyenDung ,NhaTuyenDungAdmin)
+admin.site.register(CV)
