@@ -1,5 +1,7 @@
 # accounts/admin.py
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
+
 from .models import (NguoiDung,
                      NguoiTimViec,
                      NhaTuyenDung,
@@ -10,10 +12,20 @@ from .models import (NguoiDung,
                      TinNhan,ThongBao,
                      PhongVan)
 
-# Admin cho NguoiDung
-class NguoiDungAdmin(admin.ModelAdmin):
-    list_display = ['username', 'email', 'ngay_cap_nhat']
-    search_fields = ['username', 'email']
+class NguoiDungAdmin(UserAdmin):
+    model = NguoiDung
+    list_display = ('username', 'email', 'is_staff', 'is_active')
+    fieldsets = (
+        (None, {'fields': ('username', 'password')}),
+        ('Personal info', {'fields': ('email', 'hinh_dai_dien')}),
+        ('Permissions', {'fields': ('is_staff', 'is_active')}),
+    )
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('username', 'password1', 'password2', 'email', 'hinh_dai_dien', 'is_staff', 'is_active'),
+        }),
+    )
 
 admin.site.register(NguoiDung, NguoiDungAdmin)
 admin.site.register(NguoiTimViec)

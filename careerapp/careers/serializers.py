@@ -1,7 +1,12 @@
 import re
 
 from rest_framework import serializers
-from .models import NguoiDung, NguoiTimViec, NhaTuyenDung, ViecLam
+from .models import (NguoiDung,
+                     NguoiTimViec,
+                     NhaTuyenDung,
+                     ViecLam,
+                     CV,
+                     YeuCauTuyenDung)
 
 
 class NguoiDungSerializer(serializers.ModelSerializer):
@@ -111,3 +116,14 @@ class ViecLamSerializer(serializers.ModelSerializer):
             'diaChi',
             'ngayHetHan',
         ]
+
+class CVSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CV
+        fields = '__all__'
+
+class YeuCauTuyenDungSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = YeuCauTuyenDung
+        fields = ['id', 'cv', 'nguoi_tim_viec', 'viec_lam', 'danh_gia_ho_so', 'ket_qua_ho_so', 'ket_qua_tuyen_dung']
+        read_only_fields = ['ngay_ung_tuyen', 'ngay_cat_nhat']

@@ -1,14 +1,24 @@
 from pickle import FALSE
 
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status, permissions, mixins, generics
 from rest_framework.generics import RetrieveAPIView
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.contrib.auth.hashers import make_password
-from .models import NguoiDung, NguoiTimViec, NhaTuyenDung, ViecLam
-from .serializers import NguoiDungSerializer, NguoiTimViecSerializer, NhaTuyenDungSerializer, ViecLamSerializer
-from .permissions import IsAdminOrReadOnly, IsNguoiTimViec, IsNhaTuyenDung
+from rest_framework.views import APIView
+
+from .models import NguoiDung, NguoiTimViec, NhaTuyenDung, ViecLam, CV, YeuCauTuyenDung
+from .serializers import (NguoiDungSerializer,
+                          NguoiTimViecSerializer,
+                          NhaTuyenDungSerializer,
+                          ViecLamSerializer,
+                          CVSerializer, YeuCauTuyenDungSerializer)
+from .permissions import (IsAdminOrReadOnly,
+                          IsNguoiTimViec,
+                          IsNhaTuyenDung,
+                          IsOwnerOrAdmin, IsNguoiTimViecTaoYeuCauTuyenDung, IsNguoiTimViecXemYeuCauTuyenDung,
+                          IsNhaTuyenDungXemVaChamKetQua)
 
 class NguoiDungViewSet(viewsets.ModelViewSet):
     queryset = NguoiDung.objects.filter(is_active =True).all()
@@ -89,7 +99,7 @@ class NguoiDungViewSet(viewsets.ModelViewSet):
 class NguoiTimViecViewSet(viewsets.ModelViewSet):
     queryset = NguoiTimViec.objects.all()
     serializer_class = NguoiTimViecSerializer
-    permission_classes = [permissions.IsAuthenticated, IsNguoiTimViec]  # Chỉ người tìm việc mới có thể chỉnh sửa thông tin của mình
+    # permission_classes = [permissions.IsAuthenticated, IsNguoiTimViec]  # Chỉ người tìm việc mới có thể chỉnh sửa thông tin của mình
 
     def get_permissions(self):
         # Người tìm việc chỉ có thể xem và chỉnh sửa thông tin của chính họ
@@ -103,7 +113,7 @@ class NguoiTimViecViewSet(viewsets.ModelViewSet):
 class NhaTuyenDungViewSet(viewsets.ModelViewSet):
     queryset = NhaTuyenDung.objects.all()
     serializer_class = NhaTuyenDungSerializer
-    permission_classes = [permissions.IsAuthenticated, IsNhaTuyenDung]  # Chỉ nhà tuyển dụng mới có thể chỉnh sửa thông tin của mình
+    # permission_classes = [permissions.IsAuthenticated, IsNhaTuyenDung]  # Chỉ nhà tuyển dụng mới có thể chỉnh sửa thông tin của mình
 
     def get_permissions(self):
         # Nhà tuyển dụng có thể chỉnh sửa thông tin công ty của mình
@@ -116,12 +126,111 @@ class NhaTuyenDungViewSet(viewsets.ModelViewSet):
 
 
 class ViecLamViewSet(viewsets.ModelViewSet):
-    queryset = ViecLam.objects.filter(is_active =True).all()
     serializer_class = ViecLamSerializer
-    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        if self.request:
+            if self.request.user.is_staff:
+                return ViecLam.objects.all()
+        return ViecLam.objects.filter(is_active=True)
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            if self.request.user.is_staff:
+                return [permissions.IsAdminUser()]
+            return [permissions.IsAuthenticated(), (IsNhaTuyenDung | permissions.IsAdminUser)()]
+        return [permissions.AllowAny()]
 
 
 class ViecLamDetailAPIView(RetrieveAPIView):
-    queryset = ViecLam.objects.filter(is_active=True)
     serializer_class = ViecLamSerializer
     lookup_field = 'id'
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            return ViecLam.objects.all()
+        return ViecLam.objects.filter(is_active = True)
+
+class CVViewSet(viewsets.ModelViewSet):
+    queryset = CV.objects.all()
+    serializer_class = CVSerializer
+    permission_classes = [permissions.IsAuthenticated, IsNguoiTimViec | IsAdminOrReadOnly, IsOwnerOrAdmin]
+
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            return CV.objects.all()
+        elif hasattr(self.request.user, 'nguoi_tim_viec'):
+            return CV.objects.filter(nguoi_tim_viec=self.request.user.nguoi_tim_viec)
+        return CV.objects.none()
+
+class YeuCauTuyenDungViewSet(viewsets.ModelViewSet):
+    # queryset = YeuCauTuyenDung.objects.all()
+    serializer_class = YeuCauTuyenDungSerializer
+
+    def get_queryset(self):
+        if self.action == 'list':
+            if hasattr(self.request.user, 'nguoi_tim_viec'):
+                return YeuCauTuyenDung.objects.filter(nguoi_tim_viec=self.request.user.nguoi_tim_viec)
+            elif hasattr(self.request.user, 'nha_tuyen_dung'):
+                viec_lam_ids = ViecLam.objects.filter(nha_tuyen_dung=self.request.user.nha_tuyen_dung).values_list('id',
+                                                                                                                   flat=True)
+                return YeuCauTuyenDung.objects.filter(viec_lam_id__in=viec_lam_ids)
+        return YeuCauTuyenDung.objects.all()
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [permissions.IsAuthenticated(), IsNguoiTimViec()]
+        elif self.action == 'destroy' or self.action == 'list':
+            return [permissions.IsAuthenticated(), IsAdminOrReadOnly()]
+        elif self.action == 'cap_nhat_trang_thai':
+            return [permissions.IsAuthenticated(), IsNhaTuyenDung()]
+        elif self.action == 'retrieve':
+            return [permissions.IsAuthenticated(), IsNguoiTimViecXemYeuCauTuyenDung() | IsNhaTuyenDungXemVaChamKetQua()]
+        return [permissions.IsAuthenticated()]
+
+    def create(self, request, *args, **kwargs):
+        nguoi_tim_viec = getattr(request.user, 'nguoi_tim_viec', None)
+        if not nguoi_tim_viec:
+            return Response({"error": "Tài khoản không phải là người tìm việc."}, status=status.HTTP_403_FORBIDDEN)
+
+        cv_id = request.data.get('cv')
+        viec_lam_id = request.data.get('viec_lam')
+
+        try:
+            cv = CV.objects.get(id=cv_id, nguoi_tim_viec=nguoi_tim_viec)
+            viec_lam = ViecLam.objects.get(id=viec_lam_id)
+        except CV.DoesNotExist:
+            return Response({"error": "CV không tồn tại hoặc không thuộc bạn."}, status=status.HTTP_400_BAD_REQUEST)
+        except ViecLam.DoesNotExist:
+            return Response({"error": "Việc làm không tồn tại."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if YeuCauTuyenDung.objects.filter(nguoi_tim_viec=nguoi_tim_viec, viec_lam=viec_lam).exists():
+            return Response({"error": "Bạn đã ứng tuyển công việc này rồi."}, status=status.HTTP_400_BAD_REQUEST)
+
+        yeu_cau = YeuCauTuyenDung.objects.create(
+            cv=cv,
+            nguoi_tim_viec=nguoi_tim_viec,
+            viec_lam=viec_lam,
+            ket_qua_ho_so=False,
+            ket_qua_tuyen_dung=False
+        )
+
+        return Response(self.get_serializer(yeu_cau).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['patch'], url_path='cap-nhat-trang-thai')
+    def cap_nhat_trang_thai(self, request, pk=None):
+        ung_tuyen = self.get_object()
+
+        permission = IsNhaTuyenDungXemVaChamKetQua()
+        if not permission.has_object_permission(request, self, ung_tuyen):
+            return Response({"error": "Bạn không có quyền cập nhật trạng thái ứng tuyển này."},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        # Cập nhật trạng thái từ request
+        for field in ['danh_gia_ho_so', 'ket_qua_ho_so', 'ket_qua_tuyen_dung']:
+            if field in request.data:
+                setattr(ung_tuyen, field, request.data[field])
+
+        ung_tuyen.save()
+        return Response(self.get_serializer(ung_tuyen).data)

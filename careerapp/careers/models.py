@@ -81,6 +81,7 @@ class CV(models.Model):
 
 class YeuCauTuyenDung(models.Model):
     ngay_ung_tuyen = models.DateTimeField(auto_now_add=True)
+    ngay_cat_nhat = models.DateTimeField(auto_now=True)
     danh_gia_ho_so = models.CharField(max_length=255, null=True)
     ket_qua_ho_so = models.BooleanField()
     ket_qua_tuyen_dung = models.BooleanField()
