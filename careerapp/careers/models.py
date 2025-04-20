@@ -5,6 +5,25 @@ from cloudinary.models import CloudinaryField
 class NguoiDung(AbstractUser):
     hinh_dai_dien = CloudinaryField('image', 'hinh_dai_dien')
     ngay_cap_nhat = models.DateTimeField(auto_now=True)
+    xem_thong_bao = models.ManyToManyField('ThongBao', through='NguoiDungXemThongBao')
+
+# ======= Thông báo =======
+class ThongBao(models.Model):
+    noi_dung = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+# ======= Thời điểm xem thông báo gần nhất của người dùng =======
+class NguoiDungXemThongBao(models.Model):
+    nguoi_dung = models.ForeignKey(NguoiDung, on_delete=models.CASCADE)
+    thong_bao = models.ForeignKey(ThongBao, on_delete=models.CASCADE)
+    ngay_xem_gan_nhat = models.DateTimeField(auto_now=True)
+    da_doc = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('nguoi_dung', 'thong_bao')
+
+    def __str__(self):
+        return self.nguoi_dung.noi_dung
 
 class NguoiTimViec(models.Model):
     nguoi_dung = models.OneToOneField(NguoiDung, on_delete=models.CASCADE, related_name='nguoi_tim_viec')  # OneToOneField liên kết trực tiếp với NguoiDung
@@ -137,12 +156,4 @@ class PhongVan(models.Model):
         ung_vien = self.yeu_cau_phong_van.nguoi_tim_viec.nguoi_dung.username
         cong_viec = self.yeu_cau_phong_van.viec_lam.tenCongViec
         return f"Phỏng vấn: {ung_vien} - {cong_viec} ({self.thoi_gian_phong_van.strftime('%d/%m/%Y %H:%M')})"
-
-class ThongBao(models.Model):
-    noi_dung = models.TextField()
-
-    nguoi_dung = models.ForeignKey(NguoiDung, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return f"Thông báo đến {self.nguoi_dung.username}: {self.noi_dung[:50]}..."
 
