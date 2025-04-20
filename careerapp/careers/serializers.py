@@ -1,47 +1,129 @@
-# accounts/serializers.py
+import re
+
 from rest_framework import serializers
-from .models import NguoiDung, NguoiTimViec, NhaTuyenDung
+from .models import (NguoiDung,
+                     NguoiTimViec,
+                     NhaTuyenDung,
+                     ViecLam,
+                     CV,
+                     YeuCauTuyenDung)
 
 
 class NguoiDungSerializer(serializers.ModelSerializer):
-    hinh_dai_dien = serializers.SerializerMethodField()  # Trường hinh_dai_dien sẽ được tính toán thông qua phương thức này
-
-    def get_hinh_dai_dien(self, obj):
-        return obj.hinh_dai_dien.url if obj.hinh_dai_dien else None  # Trả về URL hình ảnh nếu có
+    confirm_password = serializers.CharField(write_only=True)  # Trường xác nhận mật khẩu
 
     class Meta:
         model = NguoiDung
-        fields = ['username', 'email', 'hinh_dai_dien', 'vai_tro', 'ngay_cap_nhat']
-        extra_kwargs = {'password': {'write_only': True}}  # Mật khẩu không được trả về trong response
+        fields = ['username', 'email', 'first_name', 'last_name', 'password', 'confirm_password', 'hinh_dai_dien']
+        extra_kwargs = {
+            'password': {'write_only': True},  # Đảm bảo mật khẩu không bị trả về trong response
+        }
 
     def create(self, validated_data):
-        data = validated_data.copy()
-        user = NguoiDung(**data)
-        user.set_password(user.password)
+        password = validated_data.pop('password')
+        confirm_password = validated_data.pop('confirm_password')
+
+        # Kiểm tra mật khẩu và mật khẩu xác nhận có trùng khớp không
+        if password != confirm_password:
+            raise serializers.ValidationError("Mật khẩu và mật khẩu xác nhận không khớp.")
+
+        # Kiểm tra mật khẩu có đủ mạnh không
+        if not self.is_strong_password(password):
+            raise serializers.ValidationError(
+                "Mật khẩu không đủ mạnh. Mật khẩu phải có ít nhất 8 ký tự, một chữ cái viết hoa, một chữ số và một ký tự đặc biệt.")
+
+        # Tạo người dùng và mã hóa mật khẩu
+        user = NguoiDung(**validated_data)
+        user.set_password(password)  # Mã hóa mật khẩu trước khi lưu
         user.save()
         return user
 
     def to_representation(self, instance):
+        # Đảm bảo chỉ trả về URL hình ảnh nếu có
         rep = super().to_representation(instance)
-        rep['hinh_dai_dien'] = instance.hinh_dai_dien.url if instance.hinh_dai_dien else None
+        if instance.hinh_dai_dien:
+            rep['hinh_dai_dien'] = instance.hinh_dai_dien.url
+        else:
+            rep['hinh_dai_dien'] = None
         return rep
 
+    def is_strong_password(self, password):
+        """
+        Kiểm tra mật khẩu có đủ mạnh hay không:
+        - Ít nhất 8 ký tự
+        - Một chữ cái viết hoa
+        - Một chữ số
+        - Một ký tự đặc biệt
+        """
+        if len(password) < 8:
+            return False
+        if not re.search(r'[A-Z]', password):  # Kiểm tra chữ cái viết hoa
+            return False
+        if not re.search(r'[0-9]', password):  # Kiểm tra chữ số
+            return False
+        if not re.search(r'[\W_]', password):  # Kiểm tra ký tự đặc biệt
+            return False
+        return True
 
-# accounts/serializers.py
+
+
 class NguoiTimViecSerializer(serializers.ModelSerializer):
+    nguoi_dung = NguoiDungSerializer()
+
     class Meta:
         model = NguoiTimViec
-        fields = ['gioi_tinh', 'ngay_sinh', 'so_dien_thoai', 'email', 'ky_nang']
+        fields = ['nguoi_dung', 'gioi_tinh', 'ngay_sinh', 'so_dien_thoai', 'ky_nang']
 
-
-# accounts/serializers.py
 class NhaTuyenDungSerializer(serializers.ModelSerializer):
-    hinh_anh_doanh_nghiep = serializers.SerializerMethodField()
+    nguoi_dung = NguoiDungSerializer()
 
-    def get_hinh_anh_doanh_nghiep(self, obj):
-        return obj.hinh_anh_doanh_nghiep.url if obj.hinh_anh_doanh_nghiep else None
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+
+        # Đảm bảo trả về URL của hình ảnh doanh nghiệp từ Cloudinary
+        if instance.hinh_anh_doanh_nghiep:
+            rep['hinh_anh_doanh_nghiep'] = instance.hinh_anh_doanh_nghiep.url
+        else:
+            rep['hinh_anh_doanh_nghiep'] = None
+
+        return rep
 
     class Meta:
         model = NhaTuyenDung
-        fields = ['ten_doanh_nghiep', 'website_doanh_nghiep', 'gioi_thieu_doanh_nghiep', 'linh_vuc_hoat_dong',
-                  'dia_chi', 'hinh_anh_doanh_nghiep']
+        fields = ['nguoi_dung', 'ten_doanh_nghiep', 'website_doanh_nghiep', 'gioi_thieu_doanh_nghiep', 'linh_vuc_hoat_dong', 'dia_chi', 'hinh_anh_doanh_nghiep']
+
+
+
+class ViecLamSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ViecLam
+        fields = [
+            'id',
+            'tenCongViec',
+            'viTriDangTuyen',
+            'kinhNghiem',
+            'mucLuong',
+            'diaChi',
+            'soLuongTuyen',
+            'doTuoi',
+            'hinhThucLamViec',
+            'bangCap',
+            'phucLoi',
+            'noiDungCongViec',
+            'yeuCauCongViec',
+            'thongTinLienHe',
+            'ngayHetHan',
+            'diaChi',
+            'ngayHetHan',
+        ]
+
+class CVSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CV
+        fields = '__all__'
+
+class YeuCauTuyenDungSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = YeuCauTuyenDung
+        fields = ['id', 'cv', 'nguoi_tim_viec', 'viec_lam', 'danh_gia_ho_so', 'ket_qua_ho_so', 'ket_qua_tuyen_dung']
+        read_only_fields = ['ngay_ung_tuyen', 'ngay_cat_nhat']

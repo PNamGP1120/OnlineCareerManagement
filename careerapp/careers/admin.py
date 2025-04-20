@@ -1,4 +1,6 @@
+# accounts/admin.py
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
 from django.utils.safestring import mark_safe
 from django import forms
 from ckeditor_uploader.widgets import CKEditorUploadingWidget
@@ -31,6 +33,33 @@ class NhaTuyenDungAdmin(admin.ModelAdmin):
 
     form = NhaTuyenDungGioiThieuForm
 
+
+from .models import (NguoiDung,
+                     NguoiTimViec,
+                     NhaTuyenDung,
+                     ViecLam,
+                     CV,
+                     YeuCauTuyenDung,
+                     HoiThoai,
+                     TinNhan,ThongBao,
+                     PhongVan)
+
+
+class NguoiDungAdmin(UserAdmin):
+    model = NguoiDung
+    list_display = ('username', 'email', 'is_staff', 'is_active')
+    fieldsets = (
+        (None, {'fields': ('username', 'password')}),
+        ('Personal info', {'fields': ('email', 'hinh_dai_dien')}),
+        ('Permissions', {'fields': ('is_staff', 'is_active')}),
+    )
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('username', 'password1', 'password2', 'email', 'hinh_dai_dien', 'is_staff', 'is_active'),
+        }),
+    )
+
 # Người tìm việc có thể thêm CV ngay tại phần nhập thông tin của họ
 class CVInlineAdmin(admin.StackedInline):
     model = CV
@@ -49,8 +78,13 @@ class NguoiDungXemThongBaoInlineAdmin(admin.TabularInline):
 class NguoiDungAdmin(admin.ModelAdmin):
     inlines = [NguoiDungXemThongBaoInlineAdmin]
 
-admin.site.register(ThongBao)
 admin.site.register(NguoiDung, NguoiDungAdmin)
+admin.site.register(ViecLam)
+admin.site.register(CV)
+admin.site.register(YeuCauTuyenDung)
+admin.site.register(HoiThoai)
+admin.site.register(TinNhan)
+admin.site.register(PhongVan)
+admin.site.register(ThongBao)
 admin.site.register(NguoiTimViec, NguoiTimViecAdmin)
 admin.site.register(NhaTuyenDung ,NhaTuyenDungAdmin)
-admin.site.register(CV)
