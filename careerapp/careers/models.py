@@ -1,6 +1,8 @@
+from ckeditor.fields import RichTextField
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from cloudinary.models import CloudinaryField
+from django.utils import timezone
 
 
 # ======= Người dùng chính =======
@@ -51,7 +53,7 @@ class CV(models.Model):
     nguoi_tim_viec = models.ForeignKey(NguoiTimViec, on_delete=models.CASCADE)
     ho_ten = models.CharField(max_length=255)
     nghe_nghiep = models.CharField(max_length=255)
-    bang_cap = models.CharField(max_length=10, choices=BangCapChoices.choices)
+    bang_cap = models.CharField(max_length=10)
     so_nam_kinh_nghiem = models.PositiveIntegerField()
     email = models.EmailField(null=True, blank=True)
     so_dien_thoai = models.CharField(max_length=20)
@@ -74,8 +76,8 @@ class ViecLam(models.Model):
     vi_tri = models.CharField(max_length=255)
     muc_luong = models.PositiveIntegerField()
     dia_chi = models.CharField(max_length=255)
-    hinh_thuc_lam_viec = models.CharField(max_length=10, choices=HinhThucLamViecChoices.choices, default='FT')
-    bang_cap = models.CharField(max_length=10, choices=BangCapChoices.choices)
+    hinh_thuc_lam_viec = models.CharField(max_length=10, default='FT')
+    bang_cap = models.CharField(max_length=10)
     kinh_nghiem = models.DurationField()
     phuc_loi = models.TextField()
     yeu_cau = models.TextField()
