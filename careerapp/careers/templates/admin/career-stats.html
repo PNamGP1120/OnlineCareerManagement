@@ -1,0 +1,13 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<h1>Thống kê thông tin các việc làm</h1>
+<h2>Số lượng việc làm đang hoạt động: {{ career_count }}</h2>
+<ul>
+    {% for c in career_stats %}
+        <li><strong>{{ c.tenCongViec }}</strong> có {{ c.CV_count }} CV ứng tuyển</li>
+    {% empty %}
+        <li>Không có dữ liệu thống kê.</li>
+    {% endfor %}
+</ul>
+{% endblock %}

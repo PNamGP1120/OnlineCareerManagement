@@ -1,50 +1,30 @@
 # accounts/admin.py
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from django.utils.safestring import mark_safe
-from django import forms
-from ckeditor_uploader.widgets import CKEditorUploadingWidget
-from .models import NguoiDung, NguoiTimViec, NhaTuyenDung, CV, ThongBao, NguoiDungXemThongBao
+from django.db.models import Count
+from django.template.response import TemplateResponse
+from django.urls import path
+
+from .models import (
+    NguoiDung,
+    NguoiTimViec,
+    NhaTuyenDung,
+    ViecLam,
+    CV,
+    YeuCauTuyenDung,
+    HoiThoai,
+    TinNhan,
+    ThongBao,
+    PhongVan
+)
 
 
-class NhaTuyenDungGioiThieuForm(forms.ModelForm):
-    gioi_thieu = forms.CharField(widget=CKEditorUploadingWidget)
-
-    class Meta:
-        model = NhaTuyenDung
-        fields = '__all__'
-
-class NhaTuyenDungAdmin(admin.ModelAdmin):
-    list_display = ['id','ten_doanh_nghiep','gioi_thieu']
-    list_filter = ['ten_doanh_nghiep','gioi_thieu']
-    search_fields = ['ten_doanh_nghiep']
-    readonly_fields = ['image_view']
-
-    def image_view(self, obj):
-        if obj.hinh_anh:
-            return mark_safe(f'<img src="{obj.hinh_anh.url}" width="120"/>')
-        return "(Không có hình)"
-
-    class Media:
-        css = {
-            'all': ('/media/static/css/style.css',)
-        }
-        js = ('media/static/js/main.js',)
-
-    form = NhaTuyenDungGioiThieuForm
+class CVInlineAdmin(admin.StackedInline):
+    model = CV
+    fk_name = 'nguoi_tim_viec'
 
 
-from .models import (NguoiDung,
-                     NguoiTimViec,
-                     NhaTuyenDung,
-                     ViecLam,
-                     CV,
-                     YeuCauTuyenDung,
-                     HoiThoai,
-                     TinNhan,ThongBao,
-                     PhongVan)
-
-
+@admin.register(NguoiDung)
 class NguoiDungAdmin(UserAdmin):
     model = NguoiDung
     list_display = ('username', 'email', 'is_staff', 'is_active')
@@ -60,31 +40,34 @@ class NguoiDungAdmin(UserAdmin):
         }),
     )
 
-# Người tìm việc có thể thêm CV ngay tại phần nhập thông tin của họ
-class CVInlineAdmin(admin.StackedInline):
-    model = CV
-    fk_name = 'nguoi_tim_viec'
 
 class NguoiTimViecAdmin(admin.ModelAdmin):
-    inlines = [CVInlineAdmin, ]
+    inlines = [CVInlineAdmin]
 
-# Khi vào trang người dùng thì thấy được luôn những thông báo đã xem
-class NguoiDungXemThongBaoInlineAdmin(admin.TabularInline):
-    model = NguoiDungXemThongBao
-    extra = 0
-    fields = ('thong_bao', 'ngay_xem_gan_nhat', 'da_doc')
-    readonly_fields = ('ngay_xem_gan_nhat',)
 
-class NguoiDungAdmin(admin.ModelAdmin):
-    inlines = [NguoiDungXemThongBaoInlineAdmin]
+class CareerAppAdminSite(admin.AdminSite):
+    site_header = 'Hệ thống tìm việc trực tuyến'
 
-admin.site.register(NguoiDung, NguoiDungAdmin)
-admin.site.register(ViecLam)
-admin.site.register(CV)
-admin.site.register(YeuCauTuyenDung)
-admin.site.register(HoiThoai)
-admin.site.register(TinNhan)
-admin.site.register(PhongVan)
-admin.site.register(ThongBao)
-admin.site.register(NguoiTimViec, NguoiTimViecAdmin)
-admin.site.register(NhaTuyenDung ,NhaTuyenDungAdmin)
+    def get_urls(self):
+        return [path('career-stats/', self.stats_view)] + super().get_urls()
+
+    def stats_view(self, request):
+        count = ViecLam.objects.filter(is_active=True).count()
+        stats = ViecLam.objects.annotate(CV_count=Count('yeucautuyendung')).values('id', 'tenCongViec', 'CV_count')
+        return TemplateResponse(request, 'admin/career-stats.html', {
+            'career_count': count,
+            'career_stats': stats,
+        })
+
+
+admin_site = CareerAppAdminSite(name='eCareer')
+admin_site.register(NguoiDung, NguoiDungAdmin)
+admin_site.register(NguoiTimViec, NguoiTimViecAdmin)
+admin_site.register(NhaTuyenDung)
+admin_site.register(ViecLam)
+admin_site.register(CV)
+admin_site.register(YeuCauTuyenDung)
+admin_site.register(HoiThoai)
+admin_site.register(TinNhan)
+admin_site.register(PhongVan)
+admin_site.register(ThongBao)
