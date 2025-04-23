@@ -23,7 +23,7 @@ class NguoiDungXemThongBao(models.Model):
         unique_together = ('nguoi_dung', 'thong_bao')
 
     def __str__(self):
-        return self.nguoi_dung.noi_dung
+        return f"{self.nguoi_dung.username} - {self.thong_bao.noi_dung}"
 
 class NguoiTimViec(models.Model):
     nguoi_dung = models.OneToOneField(NguoiDung, on_delete=models.CASCADE, related_name='nguoi_tim_viec')  # OneToOneField liên kết trực tiếp với NguoiDung
