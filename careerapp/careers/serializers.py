@@ -148,3 +148,6 @@ class YeuCauTuyenDungSerializer(serializers.ModelSerializer):
             'danh_gia_ho_so', 'ket_qua_ho_so', 'ket_qua_tuyen_dung'
         ]
         read_only_fields = ['ngay_ung_tuyen', 'ngay_cat_nhat']
+
+
+
