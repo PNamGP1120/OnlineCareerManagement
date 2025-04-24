@@ -32,13 +32,13 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'django.contrib.admin',
-    'django.contrib.auth',
+    'django.contrib.auth', # Với khai báo này nó sẽ đảm bảo mỗi model có 4 quyền mặc định (add, change, delete, view)
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'careers.apps.CareersConfig',
-    'rest_framework',
+    'rest_framework', # Rest framework API
     'cloudinary',
     'cloudinary_storage',
 ]
@@ -131,6 +131,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Phân quyền lại cho NguoiDung trong chính model của ta
 AUTH_USER_MODEL = 'careers.NguoiDung'
 
 
@@ -152,5 +153,8 @@ cloudinary.config(
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    # Phân trang cho API Rest Framework (page size = 2)
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 2,
 }

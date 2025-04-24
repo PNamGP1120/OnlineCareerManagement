@@ -6,15 +6,25 @@ from .models import (NguoiDung,
                      NhaTuyenDung,
                      ViecLam,
                      CV,
-                     YeuCauTuyenDung)
+                     YeuCauTuyenDung,
+                     # NguoiDungXemThongBao,
+                        )
 
+# class NguoiDungXemThongBaoSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = NguoiDungXemThongBao
+#         fields = '__all__'
 
 class NguoiDungSerializer(serializers.ModelSerializer):
+    # NguoiDungXemThongBaos = NguoiDungXemThongBao(Many = True)
+
     confirm_password = serializers.CharField(write_only=True)  # Trường xác nhận mật khẩu
 
     class Meta:
         model = NguoiDung
-        fields = ['username', 'email', 'first_name', 'last_name', 'password', 'confirm_password', 'hinh_dai_dien']
+        fields = ['username', 'email', 'first_name', 'last_name', 'password', 'confirm_password', 'hinh_dai_dien'
+                  # ,'NguoiDungXemThongBao'
+                  ]
         extra_kwargs = {
             'password': {'write_only': True},  # Đảm bảo mật khẩu không bị trả về trong response
         }

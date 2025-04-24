@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from cloudinary.models import CloudinaryField
 
+# Bằng cách kế thừa Abstract, việc bổ sung thông tin user trong tương lai sẽ dễ dàng hơn
 class NguoiDung(AbstractUser):
     hinh_dai_dien = CloudinaryField('image', 'hinh_dai_dien')
     ngay_cap_nhat = models.DateTimeField(auto_now=True)
